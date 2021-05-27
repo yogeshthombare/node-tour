@@ -3,7 +3,6 @@ const morgan = require('morgan');
 
 const tourRoutes = require('./routes/tourRoutes');
 const userRoutes = require('./routes/userRoutes');
-const authRoutes = require('./routes/authRoutes');
 const globalErrHandler = require('./controllers/errorController');
 
 const AppError = require('./utils/appError');
@@ -21,9 +20,6 @@ app.use((req, res, next) => {
   req.requestTime = new Date().toISOString();
   next();
 });
-
-app.post('/api/v1/signup', authRoutes.signnp);
-app.post('/api/v1/login', authRoutes.login);
 
 app.use('/api/v1/tours', tourRoutes);
 app.use('/api/v1/users', userRoutes);
