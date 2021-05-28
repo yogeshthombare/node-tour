@@ -7,23 +7,26 @@ const router = express.Router();
 
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
-
 router.post('forgotPassword', authController.forgotPassword);
 router.post('resetPassword/:token', authController.resetPassword);
 
-router.patch('updatePassword', authController.isLoggedIn, authController.updatePassword);
+router.use(authController.isLoggedIn);
 
-router.patch('deleteMyAccount', authController.isLoggedIn, usersController.deleteMyAccount);
+router.get('/me', usersController.getMe, usersController.getUserDetails)
+router.patch('updatePassword', authController.updatePassword);
+router.patch('deleteMyAccount', usersController.deleteMyAccount);
+router.patch('updateMyAccount', usersController.updateMyAccount);
 
-router.patch('updateMyAccount', authController.isLoggedIn, usersController.updateMyAccount);
+// following routes can be accessed by admin only
+router.use(authController.restrictTo('admin'));
 
 router.route('/')
-  .get(authController.isLoggedIn, usersController.getUsers)
-  .post(authController.isLoggedIn, usersController.createUser);
+  .get(usersController.getUsers)
+  .post(usersController.createUser);
 
 router.route('/:id')
-  .get(authController.isLoggedIn, usersController.getUserDetails)
-  .put(authController.isLoggedIn, usersController.updateUser)
-  .delete(authController.isLoggedIn, usersController.deleteUser);
+  .get(usersController.getUserDetails)
+  .put(usersController.updateUser)
+  .delete(usersController.deleteUser);
 
 module.exports = router;

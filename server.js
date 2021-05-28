@@ -25,11 +25,11 @@ const server = app.listen(process.env.PORT, () => {
 
 moongose.set('useFindAndModify', false);
 
-process.on('unhandledRejection', err => {
-  console.log(err.name, err.message);
-  console.log('Unhandled Rejection! Shutting Down');
-  server.close(() => {
-    process.exit(1); // 1 stands for uncought exception
-  });
-});
+// process.on('unhandledRejection', err => {
+//   console.log(err.name, err.message);
+//   console.log('Unhandled Rejection! Shutting Down');
+//   server.close(() => {
+//     process.exit(1); // 1 stands for uncought exception
+//   });
+// });
 

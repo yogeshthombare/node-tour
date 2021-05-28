@@ -32,7 +32,8 @@ const tourSchema = new mongoose.Schema({
     type: Number,
     default: 4.5,
     min: [1, 'Rating must be above 1'],
-    max: [5, 'Rating must be below 5']
+    max: [5, 'Rating must be below 5'],
+    set: val => Math.round(val * 10) / 10
   },
   ratingQuatity: {
     type: Number,
@@ -74,29 +75,66 @@ const tourSchema = new mongoose.Schema({
   secreteTour: {
     type: Boolean,
     default: false
-  }
+  },
+  startLocation: {
+    type: {
+      type: String,
+      defaut: 'Point',
+      enum: ['Point']
+    },
+    coordinates: [Number],
+    address: String,
+    description: String
+  },
+  locations: [
+    {
+      type: {
+        type: String,
+        defaut: 'Point',
+        enum: ['Point']
+      },
+      coordinates: [Number],
+      address: String,
+      description: String,
+      day: Number
+    }
+  ],
+  guides: [{
+    type: mongoose.Schema.ObjectId,
+    ref: 'User'
+
+  }]
 },
   {
-    toJson: { virtuals: false },
-    toObject: { virtuals: false }
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
   }
 );
 
+// indexes
+// tourSchema.index({ price: 1 })
+// Compund index 1: asc ,-1: desc 
+tourSchema.index({ price: 1, ratingAverage: -1 })
+tourSchema.index({ slug: 1 })
+tourSchema.index({ startLocation: '2dsphere' })
+
 // Virtual column in document
 tourSchema.virtual('durationWeek').get(function () {
-  return this.duration / 7
+  return Math.round(this.duration / 7)
 });
+
+// virtual field for reviews
+tourSchema.virtual('reviews', {
+  ref: 'Review',
+  foreignField: 'tour',
+  localField: '_id'
+})
 
 // Document middleware runs before save and create only and not on insertMany
 tourSchema.pre('save', function (next) {
   this.slug = slugify(this.name, { lower: true });
   next();
 });
-
-// This is post save
-// tourSchema.post('save', function (doc, next) {
-//   console.log(doc);
-// });
 
 // Query middlewate / hook
 
@@ -107,10 +145,10 @@ tourSchema.pre(/^find/, function (next) {
 
 // Aggregation middleware
 
-tourSchema.pre('aggregate', function (next) {
-  this.pipeline().unshift({ $match: { secreteTour: { $ne: true } } });
-  next();
-});
+// tourSchema.pre('aggregate', function (next) {
+//   this.pipeline().unshift({ $match: { secreteTour: { $ne: true } } });
+//   next();
+// });
 
 
 const Tour = mongoose.model('Tour', tourSchema);

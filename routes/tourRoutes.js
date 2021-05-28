@@ -1,36 +1,48 @@
 const express = require('express');
 
-const {
-  getTours,
-  createTour,
-  getTourDetails,
-  updateTour,
-  deleteTour,
-  aliasTopTours,
-  getTourStats,
-  getMonthlyPlan
-} = require('../controllers/toursController');
+const toursController = require('../controllers/toursController');
 
 const authController = require('../controllers/authController');
+const reviewRouter = require('../routes/reviewRoutes');
 
 const router = express.Router();
 
 // Middleware to check if id exists
 // router.param('id', checkValidId)
-
-router.route('/tour-stats').get(authController.isLoggedIn, getTourStats)
-router.route('/monthly-plan/:year').get(authController.isLoggedIn, getMonthlyPlan)
-
-router.route('/top-3-cheap')
-  .get(aliasTopTours, authController.isLoggedIn, getTours);
+router.use('/:tourId/reviews', reviewRouter)
 
 router.route('/')
-  .get(authController.isLoggedIn, getTours)
-  .post(authController.isLoggedIn, createTour);
+  .get(toursController.getTours)
+  .post(authController.isLoggedIn,
+    authController.restrictTo('admin', 'lead-guide'),
+    toursController.createTour);
+
 
 router.route('/:id')
-  .get(authController.isLoggedIn, getTourDetails)
-  .put(authController.isLoggedIn, updateTour)
-  .delete(authController.isLoggedIn, deleteTour);
+  .get(toursController.getTourDetails)
+  .put(
+    authController.isLoggedIn,
+    authController.restrictTo('admin', 'lead-guide'),
+    toursController.updateTour)
+  .delete(
+    authController.isLoggedIn,
+    authController.restrictTo('admin', 'lead-guide'),
+    toursController.deleteTour);
+
+router.route('/tour-stats').get(
+  authController.restrictTo('admin', 'guide', 'lead-guide'),
+  toursController.getTourStats);
+
+router.route('/monthly-plan/:year').get(
+  authController.isLoggedIn,
+  authController.restrictTo('admin', 'guide', 'lead-guide'),
+  toursController.getMonthlyPlan);
+
+router.route('/top-3-cheap')
+  .get(toursController.aliasTopTours,
+    toursController.getTours);
+
+router.get('/tours-within/:distance/center/:latlng/unit/:unit', toursController.getToursWithinDistance);
+router.get('/distances/:latlng/unit/:unit', toursController.getTourDistances);
 
 module.exports = router;

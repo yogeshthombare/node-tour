@@ -1,10 +1,14 @@
 const fs = require('fs');
 const moongose = require('mongoose');
 const Tour = require('../models/tourModel');
+const User = require('../models/userModel');
+const Review = require('../models/reviewModel');
 const dotenv = require('dotenv');
 
 dotenv.config();
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/tour-samples.json`, 'utf-8'));
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/tours.json`, 'utf-8'));
+const reviews = JSON.parse(fs.readFileSync(`${__dirname}/reviews.json`, 'utf-8'));
+const users = JSON.parse(fs.readFileSync(`${__dirname}/users.json`, 'utf-8'));
 
 // console.log(tours);
 
@@ -22,8 +26,9 @@ moongose.connect(DB,
 
 importTours = async () => {
   try {
-    console.log('I am herer');
     await Tour.create(tours);
+    await User.create(users);
+    await Review.create(reviews);
     console.log('Data inported successfully');
   } catch (error) {
     console.log(error);
@@ -34,6 +39,8 @@ importTours = async () => {
 deleteTours = async () => {
   try {
     await Tour.deleteMany();
+    await User.deleteMany();
+    await Review.deleteMany();
     console.log('Data deleted successfully');
   } catch (error) {
     console.log(error);

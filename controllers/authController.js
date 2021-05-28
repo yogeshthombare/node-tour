@@ -36,6 +36,7 @@ createAndSendToken = (user, statusCode, res) => {
 }
 
 exports.signup = catchAsync(async (req, res, next) => {
+  console.log(req.body);
   const user = new User({
     'name': req.body.name,
     'email': req.body.email,
@@ -43,9 +44,10 @@ exports.signup = catchAsync(async (req, res, next) => {
     'passwordConfirm': req.body.passwordConfirm,
   });
 
-  user.save();
+  const newUser = await user.save();
 
-  createAndSendToken(user, 201, res);
+  console.log(newUser);
+  createAndSendToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -145,27 +147,36 @@ exports.isLoggedIn = catchAsync(async (req, res, next) => {
   }
 
   if (!token) {
-    return next(new appError('Access Denied for anuthorised login', 401));
+    return next(new AppError('Access Denied for anuthorised login', 401));
   }
   // token verification
   const decoded = await promisify(jwt.verify)(token, process.env.SECRETE_KEY);
 
+  console.log(decoded);
   // check if user still exists or not deleted
   const currentUser = await User.findById(decoded.id);
-
   if (!currentUser) {
-    return next(new appError('User does not exist for the token provided', 401));
+    return next(new AppError('User does not exist for the token provided', 401));
   }
 
   // check if user chenged password after token issued
   if (currentUser.isPasswordChangedAfterLogin(decoded.iat)) {
-    return next(new appError('Password has changed, Please login again ', 401));
+    return next(new AppError('Password has changed, Please login again ', 401));
   }
 
   // store user info in req
   req.user = currentUser;
   next();
 });
+
+exports.restrictTo = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(new AppError('You do not have access to this functionality', 403));
+    }
+    next();
+  }
+}
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // get user
@@ -175,7 +186,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
   // validate password
   if (!(await user.isValidPassword(req.body.currentPassword, user.password))) {
-    return next(new appError('Please enter valid current password', 401));
+    return next(new AppError('Please enter valid current password', 401));
   }
 
   // update password

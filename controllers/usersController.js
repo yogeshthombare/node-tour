@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
+const factory = require('./handlerFactory');
 
 const filterParams = (req, allowedParams) => {
   const newParams = {};
@@ -9,38 +10,9 @@ const filterParams = (req, allowedParams) => {
   });
 }
 
-exports.getUsers = catchAsync(async (req, res) => {
-  const users = await User.find();
-  res.status(200).json({
-    status: 'success',
-    results: users.length,
-    data: {
-      users
-    }
-  });
-});
-
 exports.createUser = (req, res) => {
   res.status(404).json({
-    message: 'No method implented'
-  });
-};
-
-exports.getUserDetails = (req, res) => {
-  res.status(404).json({
-    message: 'No method implented'
-  });
-};
-
-exports.updateUser = (req, res) => {
-  res.status(404).json({
-    message: 'No method implented'
-  });
-};
-
-exports.deleteUser = (req, res) => {
-  res.status(404).json({
-    message: 'No method implented'
+    message: 'This route is not defined, Please use signup instead'
   });
 };
 
@@ -70,3 +42,16 @@ exports.updateMyAccount = catchAsync(async (req, res, next) => {
     }
   });
 });
+
+exports.getMe = (req, res, next) => {
+  req.param.id = req.user.id;
+  next();
+};
+
+exports.getUsers = factory.getAll(User);
+
+exports.getUserDetails = factory.getOne(User);
+
+exports.updateUser = factory.updateOne(User);
+
+exports.deleteUser = factory.deleteOne(User);
