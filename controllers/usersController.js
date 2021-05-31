@@ -1,9 +1,41 @@
+const multer = require('multer');
+const sharp = require('sharp');
 const User = require("../models/userModel");
 const AppError = require("../utils/appError");
 const catchAsync = require("../utils/catchAsync");
 const factory = require('./handlerFactory');
 
-const filterParams = (req, allowedParams) => {
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, res, cb) => {
+  if (file.mimetype.startswith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('Invalid image', 400), false);
+  }
+}
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter
+});
+
+exports.uploadUserPhoto = upload.single('photo');
+
+exports.resizeUserPhoto = catchAsync(async (req, res, next) => {
+  if (!req.file) return next();
+
+  req.file.filename = `user-${req.user.id}-${Date.now()}.jpeg`;
+
+  // Memory storage in multer returns buffer
+  await sharp(req.file.buffer)
+    .resize(500, 500)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/users/${req.file.filename}`);
+});
+
+const filterParams = (req, ...allowedParams) => {
   const newParams = {};
   Object.keys.forEach(el => {
     if (allowedParams.includes(el)) newParams[el] = req[el];
@@ -32,6 +64,7 @@ exports.updateMyAccount = catchAsync(async (req, res, next) => {
 
   // Remove all unwanted params to update
   const filteredObj = filterParams(req.body, ['name', 'email']);
+  if (req.file) filteredObj.photo = req.file.filename;
 
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredObj, { new: true, runValidators: true });
 

@@ -20,9 +20,11 @@ router.route('/')
 
 router.route('/:id')
   .get(toursController.getTourDetails)
-  .put(
+  .patch(
     authController.isLoggedIn,
     authController.restrictTo('admin', 'lead-guide'),
+    toursController.uploadTourImages,
+    toursController.resizeTourImages,
     toursController.updateTour)
   .delete(
     authController.isLoggedIn,

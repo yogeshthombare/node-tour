@@ -7,15 +7,20 @@ const router = express.Router();
 
 router.post('/signup', authController.signup);
 router.post('/login', authController.login);
+
 router.post('forgotPassword', authController.forgotPassword);
 router.post('resetPassword/:token', authController.resetPassword);
 
 router.use(authController.isLoggedIn);
 
-router.get('/me', usersController.getMe, usersController.getUserDetails)
+router.get('/me', usersController.getMe, usersController.getUserDetails);
+
 router.patch('updatePassword', authController.updatePassword);
 router.patch('deleteMyAccount', usersController.deleteMyAccount);
-router.patch('updateMyAccount', usersController.updateMyAccount);
+router.patch('updateMyAccount',
+  usersController.uploadUserPhoto,
+  usersController.resizeUserPhoto,
+  usersController.updateMyAccount);
 
 // following routes can be accessed by admin only
 router.use(authController.restrictTo('admin'));
